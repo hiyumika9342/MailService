@@ -1,0 +1,59 @@
+version: "3"
+
+services:
+  web:
+    container_name: web
+    build: ./
+    depends_on:
+      - db
+    volumes:
+      - ${APP_PATH}:/var/www/app:delegated
+    ports:
+      - "${PORT}:80"
+    networks:
+      - public
+      - private
+
+  db:
+    container_name: db
+    image: mysql:8.0
+    command: mysqld --sql-mode="NO_ENGINE_SUBSTITUTION"
+    ports:
+    - "${DB_PORT}:3306"
+    volumes:
+    - ./mysql:/docker-entrypoint-initdb.d
+    - db-storage:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: seacret
+    networks:
+    - private
+
+  db-storage:
+    container_name: db-storage
+    image: mysql:8.0
+    volumes:
+      - db-storage:/var/lib/mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD:
+    command: echo "data-only container"
+    networks:
+      - private
+      
+  mail:
+      image: mailhog/mailhog
+      container_name: mail
+      ports:
+          - "8025:8025"
+      environment:
+          MH_STORAGE: maildir
+          MH_MAILDIR_PATH: /tmp
+      networks:
+          - public
+          - private
+
+networks:
+  public:
+  private:
+
+volumes:
+  db-storage:
